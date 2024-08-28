@@ -1,7 +1,6 @@
 #include "includes/slave.h"
 
 //popen() --> pipe open 
-
 int main(int argc, char *argv[]) {
     char * file_name = NULL;
     size_t fn_size = 0;
