@@ -4,22 +4,24 @@
 int main(int argc, char *argv[]) {
     char * file_name = NULL;
     size_t fn_size = 0;
+    
+   
+
 
     if (argc < 2) {
-        while (1)
-        {
+        while (1){
             if(getline(&file_name, &fn_size, stdin) > 0){  // a file name was entered
                 file_name[strlen(file_name) - 1] = '\0'; // remove newline 
                 createMD5(file_name);
-                break;
+                free(file_name);
+                file_name = NULL;
+            
             }
         }
 
-        free(file_name);
-        file_name = NULL;
     }
-
-    return 0;
+   
+    exit(1);
 }
 
 void format_string(char *md5_result, char *hash_result, char *path_result){
@@ -27,7 +29,6 @@ void format_string(char *md5_result, char *hash_result, char *path_result){
     strcpy(hash_result, token);
     token = strtok(NULL, " ");
     strcpy(path_result, strtok(token, "\n"));
-
 }
 
 void createMD5(char *file_name) {

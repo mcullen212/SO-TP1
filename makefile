@@ -12,13 +12,13 @@ view: view.o error.o
 slave: slave.o error.o
 	$(CC) $(CFLAGS) -o slave slave.o error.o
 
-md5.o: md5.c includes/md5.h includes/error.h
+md5.o: md5.c includes/md5.h 
 	$(CC) $(CFLAGS) -c md5.c
 
-view.o: view.c includes/view.h includes/error.h
+view.o: view.c includes/view.h 
 	$(CC) $(CFLAGS) -c view.c
 
-slave.o: slave.c includes/slave.h includes/error.h
+slave.o: slave.c 
 	$(CC) $(CFLAGS) -c slave.c
 
 error.o: error.c includes/error.h
