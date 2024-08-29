@@ -9,17 +9,17 @@ int main(int argc, char *argv[]) {
 
 
     if (argc < 2) {
-        while (1){
-            if(getline(&file_name, &fn_size, stdin) > 0){  // a file name was entered
+        
+        while (getline(&file_name, &fn_size, stdin) > 0){
                 file_name[strlen(file_name) - 1] = '\0'; // remove newline 
                 createMD5(file_name);
                 free(file_name);
                 file_name = NULL;
-            
-            }
+
         }
 
     }
+    free(file_name);
    
     exit(1);
 }
