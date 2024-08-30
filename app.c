@@ -89,6 +89,7 @@ int main(int argc, char *argv[]) {
         check_error(ERROR, NO_FILES);
     }
 
+
     printf("Amount of files: %d\n", argc - 1);
     int amount_of_files = argc - 1;
     int amount_of_slaves;
@@ -100,6 +101,8 @@ int main(int argc, char *argv[]) {
     pid_t slave_pids[amount_of_slaves];
     int fd_in_slave[amount_of_slaves];
     int fd_out_slave[amount_of_slaves];
+
+    sharedMemADT shared_memory = init_shared_memory(1);
 
     int current_slaves = 0;
     

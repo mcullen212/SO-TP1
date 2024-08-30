@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "error.h"
 #include <string.h>
+#include "sharedMemADT.h"
 
 
 #define WRITE_END_FD 1

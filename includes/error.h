@@ -18,6 +18,13 @@
 #define DUP_ERROR "Error: Duplicating file descriptor"
 #define READ_ERROR "Error: Reading pipe"
 #define SELECT_ERROR "Error: Monitoring file descriptors with select"
+#define MAPPING_ERROR "Error: Mapping shared memory"
+#define SHARED_MEMORY_OPEN_ERROR "Error: Opening/Creating shared memory"
+#define SEMAPHORE_FAILED_ERROR "Error: Initializing semaphore"
+#define TRUNCATING_ERROR "Error: Truncating file size"
+#define REMOVING_MAPPING_ERROR "Error: Removing mapping of the existing shared memory"
+#define REMOVING_NAME_SHM_ERROR "Error: Removing name of the shared memory"
+#define DESTROYING_SEMAPHORE_ERROR "Error: Destroying semaphore"
 
 void check_error(int code, char *msg);
 
