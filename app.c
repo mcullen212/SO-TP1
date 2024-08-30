@@ -21,11 +21,9 @@ int create_slave_process(int **fd_in_slave, int **fd_out_slave, int current_slav
     int master_to_slave[2]; // input from master to slave
     int slave_to_master[2]; // output from slave to master
 
-    
     // Create pipes
     check_error(pipe(master_to_slave), PIPE_CREATING_ERROR);
     check_error(pipe(slave_to_master), PIPE_CREATING_ERROR);
-
 
     check_error(pid, FORK_ERROR);         
 
@@ -108,8 +106,6 @@ int main(int argc, char *argv[]) {
         setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
         setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
     }
-
-    
 
     return 0;
 }

@@ -22,8 +22,7 @@
 
 void writeInPipe(int fd, char * buff);
 void redirect_pipe(int open_fd, int close_fd, FILE *stream);
-//int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave);
-int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave);
+int create_slave_process(int **fd_in_slave, int **fd_out_slave, int current_slave);
 //void * create_shared_memory(size_t size);
 
 
