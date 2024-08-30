@@ -14,6 +14,8 @@
 #define WAITPID_ERROR "Error: waiting for child process"
 #define NO_FILES "Error: no files to process"
 #define WRITE_ERROR "Error: when writing output in pipe"
+#define EXECVE_ERROR "Error: Executing slave"
+#define DUP_ERROR "Error: Duplicating file descriptor"
 
 void check_error(int code, char *msg);
 

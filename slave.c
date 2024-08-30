@@ -1,15 +1,10 @@
 #include "includes/slave.h"
 
-//popen() --> pipe open 
 int main(int argc, char *argv[]) {
     char * file_name = NULL;
     size_t fn_size = 0;
-    
-   
-
 
     if (argc < 2) {
-        
         while (getline(&file_name, &fn_size, stdin) > 0){
                 file_name[strlen(file_name) - 1] = '\0'; // remove newline 
                 createMD5(file_name);
