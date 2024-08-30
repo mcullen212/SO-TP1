@@ -102,25 +102,78 @@ int main(int argc, char *argv[]) {
         slave_pids[current_slaves] = create_slave_process(fd_in_slave, fd_out_slave, current_slaves);
     }
 
+    fd_set readfds;
+    int files_distributed = 0;
+    int files_processed = 0;
 
-    // for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
-    //     setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
-    //     setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
-    // }
+    // Set the file descriptors 
+    FD_ZERO(&readfds);
 
-    for(int file_idx = 0; file_idx < amount_of_files; file_idx++){
+    // Set the inicial amount of files to be processed by the slaves
+    for(int file_idx = 0; file_idx < amount_of_files_per_slave*amount_of_slaves ; file_idx++){
         writeInPipe(fd_in_slave[file_idx % amount_of_slaves], argv[file_idx + 1]);
+        files_distributed++;
+        
+        if(file_idx < amount_of_slaves){
+            FD_SET(fd_out_slave[file_idx], &readfds);
+        }
+        
     }
 
-    for(int slave_idx = 0; slave_idx < amount_of_files; slave_idx++) {   
-        char buffer[256];
-        ssize_t bytes_read = read(fd_out_slave[slave_idx % amount_of_slaves], buffer, sizeof(buffer) - 1); // Lee lo que el esclavo envía
-        if (bytes_read > 0) {
-            buffer[bytes_read] = '\0'; // Asegura que el buffer termine en null para ser tratado como string
-            printf("%s", buffer); // Muestra el resultado en la pantalla
+    while (files_processed < amount_of_files) {
+        fd_set temp_fds = readfds; // Copy the original grupo of descriptors
+
+        // Wait for any of the file descriptors to be ready
+        check_error(select(FD_SETSIZE, &temp_fds, NULL, NULL, NULL), SELECT_ERROR);
+        
+
+        // Go through all the slaves and check if they have finished processing the file
+        for (int i = 0; i < amount_of_slaves; i++) {
+            if (FD_ISSET(fd_out_slave[i], &temp_fds)) { // Check if the fd is still present, if not send a new file 
+                char buffer[256];
+                ssize_t bytes_read = read(fd_out_slave[i], buffer, sizeof(buffer) - 1);
+
+                if (bytes_read > 0) {
+                    buffer[bytes_read] = '\0';
+                    files_processed++;
+
+                    // Check if all the files were processed 
+                    if (files_distributed < amount_of_files) {
+                        writeInPipe(fd_in_slave[i], argv[files_distributed + 1]);
+                        files_distributed++;
+                    }
+                }
+            }
         }
-    }
+    } 
 
     printf("Master PID: %d\n", getpid());
     return 0;
 }
+
+
+    // // for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
+    // //     setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
+    // //     setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
+    // // }
+
+    // int files_distributed = 0;
+
+    // for(int file_idx = 0; file_idx < amount_of_files; file_idx++){
+    //     writeInPipe(fd_in_slave[file_idx % amount_of_slaves], argv[file_idx + 1]);
+    // }
+
+    // while(files_distributed < amount_of_files){
+        
+    // }
+
+    // for(int slave_idx = 0; slave_idx < amount_of_files; slave_idx++) {   
+    //     char buffer[256];
+    //     ssize_t bytes_read = read(fd_out_slave[slave_idx % amount_of_slaves], buffer, sizeof(buffer) - 1); // Lee lo que el esclavo envía
+    //     if (bytes_read > 0) {
+    //         buffer[bytes_read] = '\0'; // Asegura que el buffer termine en null para ser tratado como string
+    //         printf("%s", buffer); // Muestra el resultado en la pantalla
+    //     }
+    // }
+
+   
