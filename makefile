@@ -1,28 +1,25 @@
+# Compiler and flags
 CC = gcc
 CFLAGS = -Wall -g -Iincludes
 
-all: app view slave
+# Executables and object files
+EXECUTABLES = app view slave
+OBJECTS = app.o view.o slave.o error.o
 
-md5: app.o error.o
-	$(CC) $(CFLAGS) -o app app.o
+# Default target
+all: $(EXECUTABLES)
 
-view: view.o error.o
-	$(CC) $(CFLAGS) -o view view.o error.o
+# Compiling object files
+app: app.c
+	$(CC) $(CFLAGS) app.c error.c -o app
 
-slave: slave.o error.o
-	$(CC) $(CFLAGS) -o slave slave.o error.o
+view: view.c
+	$(CC) $(CFLAGS) view.c error.c -o view
 
-md5.o: app.c includes/app.h 
-	$(CC) $(CFLAGS) -c app.c error.c
+slave: slave.c
+	$(CC) $(CFLAGS) slave.c error.c -o slave
 
-view.o: view.c includes/view.h 
-	$(CC) $(CFLAGS) -c view.c
-
-slave.o: slave.c 
-	$(CC) $(CFLAGS) -c slave.c error.c
-
-error.o: error.c includes/error.h
-	$(CC) $(CFLAGS) -c error.c
-
+# Clean target
 clean:
-	rm -f *.o app view slave
+	rm -f $(OBJECTS) $(EXECUTABLES)
+

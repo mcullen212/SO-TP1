@@ -67,10 +67,15 @@ int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave)
 }
 
 void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files_per_slave) {
-    if(AMOUNT_OF_SLAVES(amount_of_files) < MIN_SLAVES){
-        *amount_of_slaves = MIN_SLAVES;
+    if(amount_of_files < MIN_SLAVES){
+        *amount_of_slaves = amount_of_files;
         *amount_of_files_per_slave = MIN_FILES_PER_SLAVE;
-    }else{
+    }
+    else if(AMOUNT_OF_SLAVES(amount_of_files) < MIN_SLAVES){
+        *amount_of_slaves = MIN_SLAVES;
+        *amount_of_files_per_slave = 0.2*amount_of_files;
+    }
+    else{
         *amount_of_slaves = AMOUNT_OF_SLAVES(amount_of_files);
         *amount_of_files_per_slave = FILES_PER_SLAVE;
     }
@@ -136,6 +141,7 @@ int main(int argc, char *argv[]) {
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
                     files_processed++;
+                    printf("%s", buffer);
 
                     // Check if all the files were processed 
                     if (files_distributed < amount_of_files) {
