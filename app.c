@@ -6,7 +6,7 @@
 
 void writeInPipe(int fd, char * buff) {
     write(fd, buff, strlen(buff));
-   // write(fd, NEWLINE, sizeof(char));
+    write(fd, NEWLINE, sizeof(char));
 }
 
 void redirect_pipe(int open_fd, int close_fd, FILE *stream) {
@@ -15,9 +15,8 @@ void redirect_pipe(int open_fd, int close_fd, FILE *stream) {
     check_error(close(open_fd), PIPE_CLOSING_ERROR); //close duplicated fd 
 }
 
-int create_slave_process(int **fd_in_slave, int **fd_out_slave, int current_slave) {
-    pid_t pid = fork();
-
+int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave) {
+    
     int master_to_slave[2]; // input from master to slave
     int slave_to_master[2]; // output from slave to master
 
@@ -25,6 +24,7 @@ int create_slave_process(int **fd_in_slave, int **fd_out_slave, int current_slav
     check_error(pipe(master_to_slave), PIPE_CREATING_ERROR);
     check_error(pipe(slave_to_master), PIPE_CREATING_ERROR);
 
+    pid_t pid = fork();
     check_error(pid, FORK_ERROR);         
 
     if (pid == 0) { // slave process
@@ -55,19 +55,19 @@ int create_slave_process(int **fd_in_slave, int **fd_out_slave, int current_slav
         close(slave_to_master[WRITE_END_FD]); // close read end of the pipe
 
         // master -> slave
-        *fd_in_slave[current_slave] = master_to_slave[WRITE_END_FD];
-        *fd_out_slave[current_slave] = slave_to_master[READ_END_FD];
+        fd_in_slave[current_slave] = master_to_slave[WRITE_END_FD];
+        fd_out_slave[current_slave] = slave_to_master[READ_END_FD];
 
         //closing pipes before finishing
         close(master_to_slave[READ_END_FD]); // close read end of the pipe
         close(slave_to_master[WRITE_END_FD]); // close write end of the pipe
     }
 
-    return getpid();
+    return pid;
 }
 
 void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files_per_slave) {
-    if(amount_of_files < MIN_SLAVES){
+    if(AMOUNT_OF_SLAVES(amount_of_files) < MIN_SLAVES){
         *amount_of_slaves = MIN_SLAVES;
         *amount_of_files_per_slave = MIN_FILES_PER_SLAVE;
     }else{
@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
         check_error(ERROR, NO_FILES);
     }
 
+    printf("Amount of files: %d\n", argc - 1);
     int amount_of_files = argc - 1;
     int amount_of_slaves;
     int amount_of_files_per_slave;
@@ -99,13 +100,27 @@ int main(int argc, char *argv[]) {
     
     for(; current_slaves < amount_of_slaves; current_slaves++){
         slave_pids[current_slaves] = create_slave_process(fd_in_slave, fd_out_slave, current_slaves);
-        
     }
 
-    for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
-        setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
-        setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
+
+    // for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
+    //     setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
+    //     setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
+    // }
+
+    for(int file_idx = 0; file_idx < amount_of_files; file_idx++){
+        writeInPipe(fd_in_slave[file_idx % amount_of_slaves], argv[file_idx + 1]);
     }
 
+    for(int slave_idx = 0; slave_idx < amount_of_files; slave_idx++) {   
+        char buffer[256];
+        ssize_t bytes_read = read(fd_out_slave[slave_idx % amount_of_slaves], buffer, sizeof(buffer) - 1); // Lee lo que el esclavo envía
+        if (bytes_read > 0) {
+            buffer[bytes_read] = '\0'; // Asegura que el buffer termine en null para ser tratado como string
+            printf("%s", buffer); // Muestra el resultado en la pantalla
+        }
+    }
+
+    printf("Master PID: %d\n", getpid());
     return 0;
 }

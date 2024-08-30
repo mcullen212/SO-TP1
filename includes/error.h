@@ -16,6 +16,7 @@
 #define WRITE_ERROR "Error: when writing output in pipe"
 #define EXECVE_ERROR "Error: Executing slave"
 #define DUP_ERROR "Error: Duplicating file descriptor"
+#define READ_ERROR "Error: Reading pipe"
 
 void check_error(int code, char *msg);
 
