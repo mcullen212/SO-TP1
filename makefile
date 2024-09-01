@@ -11,7 +11,7 @@ all: $(EXECUTABLES)
 
 # Compiling object files
 app: app.c
-	$(CC) $(CFLAGS) app.c error.c -o app
+	$(CC) $(CFLAGS) app.c error.c sharedMemADT.c -o app
 
 view: view.c
 	$(CC) $(CFLAGS) view.c error.c -o view

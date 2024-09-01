@@ -6,6 +6,7 @@
 #include <errno.h>
 
 #define ERROR -1
+#define EXIT_ERROR "Error: Exiting"
 #define PIPE_CREATING_ERROR "Error: Creating pipe"
 #define PIPE_OPENING_ERROR "Error: Opening from pipe"
 #define PIPE_CLOSING_ERROR "Error: Wlosing pipe"
@@ -25,6 +26,7 @@
 #define REMOVING_MAPPING_ERROR "Error: Removing mapping of the existing shared memory"
 #define REMOVING_NAME_SHM_ERROR "Error: Removing name of the shared memory"
 #define DESTROYING_SEMAPHORE_ERROR "Error: Destroying semaphore"
+#define FILE_ERROR "Error: Opening file"
 
 void check_error(int code, char *msg);
 

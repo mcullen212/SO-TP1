@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         while (getline(&file_name, &fn_size, stdin) > 0){
             file_name[strlen(file_name) - 1] = '\0'; // remove newline 
-            createMD5(file_name);
+            create_MD5(file_name);
             free(file_name);
             file_name = NULL;
         }
@@ -25,7 +25,7 @@ void format_string(char *md5_result, char *hash_result, char *path_result){
     strcpy(path_result, strtok(token, "\n"));
 }
 
-void createMD5(char *file_name) {
+void create_MD5(char *file_name) {
     char command[256];
     char buff[MAX_SIZE_BUFF];
     char hash_result[MAX_SIZE_BUFF];

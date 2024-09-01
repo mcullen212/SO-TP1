@@ -17,12 +17,10 @@
 
 typedef struct sharedMemCDT * sharedMemADT;
 
-
-
-// Function prototypes
-struct shared_data* init_shared_memory(int is_creator);
-void write_to_shared_memory(struct shared_data* data, const char* string);
-void read_from_shared_memory(struct shared_data* data);
-void cleanup_shared_memory(struct shared_data* data);
+sharedMemADT init_shared_memory(int is_creator);
+void write_to_shared_memory(sharedMemADT data, const char* string);
+void read_from_shared_memory(sharedMemADT data);
+void cleanup_shared_memory(sharedMemADT data);
+void close_shared_memory(sharedMemADT shm);
 
 #endif // SHAREDMEMADT_H

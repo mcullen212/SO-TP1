@@ -102,12 +102,26 @@ int main(int argc, char *argv[]) {
     int fd_in_slave[amount_of_slaves];
     int fd_out_slave[amount_of_slaves];
 
-    sharedMemADT shared_memory = init_shared_memory(1);
+    // Create shared memory 
+    sharedMemADT shared_memory = init_shared_memory(CREATOR);
+    sleep(SLEEP_TIME);
 
     int current_slaves = 0;
     
     for(; current_slaves < amount_of_slaves; current_slaves++){
         slave_pids[current_slaves] = create_slave_process(fd_in_slave, fd_out_slave, current_slaves);
+    }
+
+    // Open the file to write the results
+    FILE *results = fopen("result.txt", "w");
+    if(results == NULL){
+        check_error(ERROR, FILE_ERROR);
+    }
+
+    // Update pipe input and output streams to use shared memory
+    for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
+        setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0); // write to the pipe
+        setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0); // read from the pipe
     }
 
     fd_set readfds;
@@ -144,7 +158,11 @@ int main(int argc, char *argv[]) {
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
                     files_processed++;
-                    printf("%s", buffer);
+                    //printf("%s", buffer);
+                    write_to_shared_memory(shared_memory, buffer);
+                    fprintf(results, "%s\n", buffer);
+
+                    //read_from_shared_memory(shared_memory); va en view creo no aca pero dejo comentado por si acaso
 
                     // Check if all the files were processed 
                     if (files_distributed < amount_of_files) {
@@ -156,7 +174,25 @@ int main(int argc, char *argv[]) {
         }
     } 
 
-    printf("Master PID: %d\n", getpid());
+    // Close the file
+    fclose(results);
+
+    //printf("Master PID: %d\n", getpid());
+
+    // Cleanup shared memory
+    cleanup_shared_memory(shared_memory); 
+
+    // Close file descriptors
+    for(int i = 0; i < amount_of_slaves; i++) {
+        close(fd_in_slave[i]);
+        close(fd_out_slave[i]);
+    }
+
+    // Wait for all the slaves to finish
+    for(int i = 0; i < amount_of_slaves; i++) {
+        check_error(waitpid(slave_pids[i], NULL, 0), WAITPID_ERROR);
+    }
+
     return 0;
 }
 

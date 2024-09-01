@@ -12,6 +12,6 @@
 #define MD5_SIZE 32
 
 void format_string(char *md5_result, char *hash_result, char *path_result);
-void createMD5(char *file_name);
+void create_MD5(char *file_name);
 
 #endif

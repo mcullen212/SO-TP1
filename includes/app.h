@@ -21,11 +21,13 @@
 #define NEWLINE "\n"
 #define BUFFER_SIZE 2024
 
+#define CREATOR 1
+#define SLEEP_TIME 2
+
 
 void writeInPipe(int fd, char * buff);
 void redirect_pipe(int open_fd, int close_fd, FILE *stream);
 int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave);
-//void * create_shared_memory(size_t size);
 
 
 #endif

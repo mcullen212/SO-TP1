@@ -1,29 +1,29 @@
 #include "includes/sharedMemADT.h"
 
 typedef struct sharedMemCDT {
+    int fd;
     char *toReturn;
     sem_t semaphore;
-}sharedMemCDT;
+} *sharedMemADT;
 
 sharedMemADT init_shared_memory(int is_creator) {
-    int shm_fd;
-    struct sharedMemCDT* data;
+    sharedMemADT data;
 
     // Create or open the shared memory object
     if (is_creator) {
         sharedMemADT new_shm = malloc(SHM_SIZE);
         shm_unlink(SHM_NAME);
-        shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-        check_error(shm_fd, SHARED_MEMORY_OPEN_ERROR);
+        data->fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+        check_error(data->fd, SHARED_MEMORY_OPEN_ERROR);
         
-        check_error(ftruncate(shm_fd, SHM_SIZE), TRUNCATING_ERROR);
+        check_error(ftruncate(data->fd, SHM_SIZE), TRUNCATING_ERROR);
     } else {
-        shm_fd = shm_open(SHM_NAME, O_RDWR);
-        check_error(shm_fd, EXIT_FAILURE);
+        data->fd = shm_open(SHM_NAME, O_RDWR);
+        check_error(data->fd, EXIT_ERROR);
     }
 
     // Map the shared memory object to the address space
-    data = sharedMemADT mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    data = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, data->fd, 0);
     check_error(data, MAPPING_ERROR);
 
     if (is_creator) {
@@ -43,6 +43,13 @@ void write_to_shared_memory(sharedMemADT data, const char* string) {
 
     // Unlock the semaphore
     sem_post(&(data->semaphore));
+}
+
+void close_shared_memory(sharedMemADT shm) {
+    // Close the shared memory object
+    shm_unlink(SHM_NAME);
+    close(shm->fd);
+    sem_close(&(shm->semaphore));
 }
 
 void read_from_shared_memory(sharedMemADT data) {

@@ -1,8 +1,8 @@
-
+#include "includes/view.h"
 
 int main(){
 
 
 
-    return 1;
+    exit(1);
 }
