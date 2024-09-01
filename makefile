@@ -21,5 +21,5 @@ slave: slave.c
 
 # Clean target
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLES)
+	rm -f $(OBJECTS) $(EXECUTABLES) results.txt
 
