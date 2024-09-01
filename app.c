@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Open the file to write the results
-    FILE *results = fopen("result.txt", "w");
+    FILE *results = fopen("results.txt", "w");
     if(results == NULL){
         check_error(ERROR, FILE_ERROR);
     }
