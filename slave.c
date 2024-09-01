@@ -44,7 +44,7 @@ void create_MD5(char *file_name) {
     if (fgets(buff, sizeof(buff), pipe) != NULL) {
         format_string(buff, hash_result, path_result);
         char toRet[MAX_SIZE_BUFF * 3];
-        int dim = snprintf(toRet, sizeof(toRet), "NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()); // format the output
+        int dim = snprintf(toRet, sizeof(toRet), "NAME: %s - MD5: %s - PID: %d", path_result, hash_result, getpid()); // format the output
         check_error((int) write(fileno(stdout), toRet, dim), WRITE_ERROR); // write in standard output
     }
 

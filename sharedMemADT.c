@@ -2,33 +2,48 @@
 
 typedef struct sharedMemCDT {
     int fd;
-    char *toReturn;
+    char *to_return;
+    size_t size_to_return;
     sem_t semaphore;
 } *sharedMemADT;
 
 sharedMemADT init_shared_memory(int is_creator) {
     sharedMemADT data;
 
-    // Create or open the shared memory object
+    // Create or open the shared memory
     if (is_creator) {
-        sharedMemADT new_shm = malloc(SHM_SIZE);
+        // Unlink any existing shared memory  
         shm_unlink(SHM_NAME);
-        data->fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-        check_error(data->fd, SHARED_MEMORY_OPEN_ERROR);
         
-        check_error(ftruncate(data->fd, SHM_SIZE), TRUNCATING_ERROR);
-    } else {
-        data->fd = shm_open(SHM_NAME, O_RDWR);
-        check_error(data->fd, EXIT_ERROR);
-    }
+        // Open shared memory with create and read-write permissions
+        int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+        check_error(fd, SHARED_MEMORY_OPEN_ERROR);
+        
+        // Set the size of the shared memory
+        check_error(ftruncate(fd, SHM_SIZE), TRUNCATING_ERROR);
+        
+        // Map the shared memory  into the address space
+        data = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (data == MAP_FAILED) {
+            check_error(ERROR, MAPPING_ERROR);
+        }
 
-    // Map the shared memory object to the address space
-    data = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, data->fd, 0);
-    check_error(data, MAPPING_ERROR);
-
-    if (is_creator) {
         // Initialize semaphore
-        check_error(sem_init(&(data->semaphore), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR), SEMAPHORE_FAILED_ERROR);
+        check_error(sem_init(&(data->semaphore), 1, 1), SEMAPHORE_FAILED_ERROR);
+        
+        data->fd = fd;
+    } else {
+        // Open existing shared memory
+        int fd = shm_open(SHM_NAME, O_RDWR, 0);
+        check_error(fd, SHARED_MEMORY_OPEN_ERROR);
+
+        // Map the shared memory into the address space
+        data = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (data == MAP_FAILED) {
+            check_error(ERROR, MAPPING_ERROR);
+        }
+        
+        data->fd = fd;
     }
 
     return data;
@@ -39,7 +54,7 @@ void write_to_shared_memory(sharedMemADT data, const char* string) {
     sem_wait(&(data->semaphore));
 
     // Write data to shared memory
-    snprintf(data->toReturn, sizeof(data->toReturn), "%s", string);
+    snprintf(data->to_return, data->size_to_return, "%s", string);
 
     // Unlock the semaphore
     sem_post(&(data->semaphore));
@@ -57,7 +72,7 @@ void read_from_shared_memory(sharedMemADT data) {
     sem_wait(&(data->semaphore));
 
     // Read data from shared memory
-    printf("%s\n", data->toReturn);
+    data->size_to_return = printf("%s", data->to_return);
 
     // Unlock the semaphore
     sem_post(&(data->semaphore));

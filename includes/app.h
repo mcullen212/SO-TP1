@@ -7,6 +7,7 @@
 #include "error.h"
 #include <string.h>
 #include "sharedMemADT.h"
+#include <sys/wait.h>
 
 
 #define WRITE_END_FD 1
