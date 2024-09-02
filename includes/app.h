@@ -25,6 +25,8 @@
 #define CREATOR 1
 #define SLEEP_TIME 2
 
+#define MAX_PID 10000
+
 
 void writeInPipe(int fd, char * buff);
 void redirect_pipe(int open_fd, int close_fd, FILE *stream);

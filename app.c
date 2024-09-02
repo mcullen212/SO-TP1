@@ -1,9 +1,5 @@
 #include "includes/app.h"
 
-// void * create_shared_memory(size_t size) {
-//     // Create shared memory
-// }
-
 void writeInPipe(int fd, char * buff) {
     write(fd, buff, strlen(buff));
     write(fd, NEWLINE, sizeof(char));
@@ -58,9 +54,6 @@ int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave)
         fd_in_slave[current_slave] = master_to_slave[WRITE_END_FD];
         fd_out_slave[current_slave] = slave_to_master[READ_END_FD];
 
-        //closing pipes before finishing
-        close(master_to_slave[READ_END_FD]); // close read end of the pipe
-        close(slave_to_master[WRITE_END_FD]); // close write end of the pipe
     }
 
     return pid;
@@ -69,7 +62,7 @@ int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave)
 void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files_per_slave) {
     if(amount_of_files < MIN_SLAVES){
         *amount_of_slaves = amount_of_files;
-        *amount_of_files_per_slave = MIN_FILE_slave_PER_SLAVE;
+        *amount_of_files_per_slave = MIN_FILES_PER_SLAVE;
     }
     else if(AMOUNT_OF_SLAVES(amount_of_files) < MIN_SLAVES){
         *amount_of_slaves = MIN_SLAVES;
@@ -88,12 +81,12 @@ int main(int argc, char *argv[]) {
     if(argc<2){
         check_error(ERROR, NO_FILES);
     }
-
-
-    printf("Amount of files: %d\n", argc - 1);
+    
     int amount_of_files = argc - 1;
     int amount_of_slaves;
     int amount_of_files_per_slave;
+
+    printf("%d %d\n", getpid(), amount_of_files);
     
 
     get_slaves(amount_of_files, &amount_of_slaves, &amount_of_files_per_slave);
@@ -103,7 +96,7 @@ int main(int argc, char *argv[]) {
     int fd_out_slave[amount_of_slaves];
 
     // Create shared memory 
-    sharedMemADT shared_memory = init_shared_memory(CREATOR);
+    sharedMemADT shared_memory = init_shared_memory(getpid(), CREATOR, amount_of_files);
     sleep(SLEEP_TIME);
 
     int current_slaves = 0;
@@ -166,7 +159,7 @@ int main(int argc, char *argv[]) {
                     files_processed++;
                     //printf("%s", buffer);
                     write_to_shared_memory(shared_memory, buffer);
-                    fprintf(results, "%s\n", buffer);
+                    fprintf(results, "%s", buffer);
 
                     //read_from_shared_memory(shared_memory); va en view creo no aca pero dejo comentado por si acaso
 
@@ -183,10 +176,7 @@ int main(int argc, char *argv[]) {
     // Close the file
     fclose(results);
 
-    //printf("Master PID: %d\n", getpid());
-
-    // Cleanup shared memory
-    cleanup_shared_memory(shared_memory); 
+    //printf("Master PID: %d\n", getpid();
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {
@@ -201,32 +191,9 @@ int main(int argc, char *argv[]) {
         check_error(waitpid(slave_pids[i], NULL, 0), WAITPID_ERROR);
     }
 
+    // Cleanup shared memory
+    close_shared_memory(shared_memory); 
+
+
     return 0;
 }
-
-
-    // // for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
-    // //     setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0);
-    // //     setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0);
-    // // }
-
-    // int files_distributed = 0;
-
-    // for(int file_idx = 0; file_idx < amount_of_files; file_idx++){
-    //     writeInPipe(fd_in_slave[file_idx % amount_of_slaves], argv[file_idx + 1]);
-    // }
-
-    // while(files_distributed < amount_of_files){
-        
-    // }
-
-    // for(int slave_idx = 0; slave_idx < amount_of_files; slave_idx++) {   
-    //     char buffer[256];
-    //     ssize_t bytes_read = read(fd_out_slave[slave_idx % amount_of_slaves], buffer, sizeof(buffer) - 1); // Lee lo que el esclavo envía
-    //     if (bytes_read > 0) {
-    //         buffer[bytes_read] = '\0'; // Asegura que el buffer termine en null para ser tratado como string
-    //         printf("%s", buffer); // Muestra el resultado en la pantalla
-    //     }
-    // }
-
-   

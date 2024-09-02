@@ -28,6 +28,7 @@
 #define DESTROYING_SEMAPHORE_ERROR "Error: Destroying semaphore"
 #define FILE_ERROR "Error: Opening file"
 #define FDOPEN_ERROR "Error: Opening file descriptor"
+#define INIT_VIEW_ERROR "Error: Initializing view"
 
 void check_error(int code, char *msg);
 

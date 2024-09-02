@@ -14,7 +14,7 @@ app: app.c
 	$(CC) $(CFLAGS) app.c error.c sharedMemADT.c -o app
 
 view: view.c
-	$(CC) $(CFLAGS) view.c error.c -o view
+	$(CC) $(CFLAGS) view.c error.c sharedMemADT.c -o view
 
 slave: slave.c
 	$(CC) $(CFLAGS) slave.c error.c -o slave
