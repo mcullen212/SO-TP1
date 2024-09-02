@@ -69,7 +69,7 @@ int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave)
 void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files_per_slave) {
     if(amount_of_files < MIN_SLAVES){
         *amount_of_slaves = amount_of_files;
-        *amount_of_files_per_slave = MIN_FILES_PER_SLAVE;
+        *amount_of_files_per_slave = MIN_FILE_slave_PER_SLAVE;
     }
     else if(AMOUNT_OF_SLAVES(amount_of_files) < MIN_SLAVES){
         *amount_of_slaves = MIN_SLAVES;
@@ -119,9 +119,15 @@ int main(int argc, char *argv[]) {
     }
 
     // Update pipe input and output streams to use shared memory
-    for(int slave_idx = 0; slave_idx < amount_of_slaves; slave_idx++) {
-        setvbuf(fdopen(fd_in_slave[slave_idx], "w"), NULL, _IONBF, 0); // write to the pipe
-        setvbuf(fdopen(fd_out_slave[slave_idx], "r"), NULL, _IONBF, 0); // read from the pipe
+    // Save the file pointer of each slave
+    FILE *in_file_slave[amount_of_slaves];
+    FILE *out_file_slave[amount_of_slaves];
+    for (int i = 0; i < amount_of_slaves; i++) {
+        in_file_slave[i] = fdopen(fd_in_slave[i], "w");
+        out_file_slave[i] = fdopen(fd_out_slave[i], "r");
+        if (in_file_slave[i] == NULL || out_file_slave[i] == NULL) {
+            check_error(ERROR, FDOPEN_ERROR);
+        }
     }
 
     fd_set readfds;
@@ -184,6 +190,8 @@ int main(int argc, char *argv[]) {
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {
+        fclose(in_file_slave[i]);
+        fclose(out_file_slave[i]);
         close(fd_in_slave[i]);
         close(fd_out_slave[i]);
     }

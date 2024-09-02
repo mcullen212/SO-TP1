@@ -27,6 +27,7 @@
 #define REMOVING_NAME_SHM_ERROR "Error: Removing name of the shared memory"
 #define DESTROYING_SEMAPHORE_ERROR "Error: Destroying semaphore"
 #define FILE_ERROR "Error: Opening file"
+#define FDOPEN_ERROR "Error: Opening file descriptor"
 
 void check_error(int code, char *msg);
 
