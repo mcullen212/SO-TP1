@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     int fd_out_slave[amount_of_slaves];
 
     // Create shared memory 
-    sharedMemADT shared_memory = init_shared_memory(getpid(), CREATOR, amount_of_files);
+    sharedMemADT shared_memory = init_shared_memory(getpid(), amount_of_files);
     sleep(SLEEP_TIME);
 
     int current_slaves = 0;

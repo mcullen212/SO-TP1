@@ -5,7 +5,7 @@ int main(int argc, char * argv[]){
     int amount_of_files;
     char to_return[256];
 
-    printf("argc: %d\n", argc);
+  
 
     if(argc == 3){
         amount_of_files = strtol(argv[2], NULL, 10);
@@ -22,14 +22,13 @@ int main(int argc, char * argv[]){
             exit(errno);
         }
     }
-    printf("PID: %d\n", pid);
-    printf("Amount of files: %d\n", amount_of_files);
-    sharedMemADT shm = init_shared_memory(pid, 0, amount_of_files);
     
+    sharedMemADT shm = init_shared_memory(pid, amount_of_files);
+    
+    //while( read_from_shared_memory(shm, to_return) > 0){
     read_from_shared_memory(shm, to_return);
-    printf("paso el read\n");
-    
-    printf("%s\n", to_return);
+        printf("%s\n", to_return);
+   // }
 
  
     close_shared_memory(shm);

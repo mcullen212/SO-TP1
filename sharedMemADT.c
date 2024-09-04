@@ -1,122 +1,106 @@
 #include "includes/sharedMemADT.h"
 
 typedef struct sharedMemCDT {
-    char name[255];
+    char shm_name[255];
     int fd;
     char *to_return;
-    size_t max_size; // Max size
-    size_t actual_size; // Actual size
-    sem_t semaphore;
+    size_t max_size;
+    size_t actual_size;
+    char readable_name[255];
+    sem_t *readable; 
+    char writable_name[255];
+    sem_t *writable;
 } *sharedMemADT;
 
-sharedMemADT init_shared_memory(pid_t pid, int is_creator, int amount_of_files) {
-    sharedMemADT data;
+sharedMemADT init_shared_memory(pid_t pid, int amount_of_files) {
+    sharedMemADT shm = malloc(SHM_SIZE);
 
-    char name[255];
-    sprintf(name, "%s_%d", SHM_NAME, pid);
-    // Create or open the shared memory
-    if (is_creator) {
-        // Unlink any existing shared memory  
-        shm_unlink(name);
+    int max_size = MAX_SIZE(amount_of_files);
 
-        // Open shared memory with create and read-write permissions
-        int fd = shm_open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-        check_error(fd, SHARED_MEMORY_OPEN_ERROR);
+    char shm_name[255];
+    sprintf(shm_name, "%s_%d", SHM_NAME, pid);
 
-        size_t max_size = SIZE_STR*amount_of_files;
-        
-        // Set the size of the shared memory
-        check_error(ftruncate(fd, max_size), TRUNCATING_ERROR);
+    //create shared memory
+    int fd = shm_open(shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-        // Map the shared memory  into the address space
-        data = mmap(0, max_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (data == MAP_FAILED) {
-            check_error(ERROR, MAPPING_ERROR);
-        }
-        data->fd = fd;
-        data->max_size = max_size;
-        strcpy(data->name, name);
-        data->actual_size = 0;
-        // Initialize semaphore
-        check_error(sem_init(&(data->semaphore), 1, 1), SEMAPHORE_FAILED_ERROR);
-    } else {
-        // Open existing shared memory
-        int fd = shm_open(name, O_CREAT | O_RDWR, 0);
-        check_error(fd, SHARED_MEMORY_OPEN_ERROR);
+    check_error(fd, SHARED_MEMORY_OPEN_ERROR);
 
-        size_t max_size = SIZE_STR*amount_of_files;
+    check_error(ftruncate(fd, max_size), TRUNCATING_ERROR);
 
-        check_error(ftruncate(fd, max_size), TRUNCATING_ERROR);
+    shm->to_return = mmap(NULL, max_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-        
-        // Map the shared memory into the address space
-        data = mmap(0, max_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (data == MAP_FAILED) {
-            check_error(ERROR, MAPPING_ERROR);
-        }
-        data->fd = fd;
-        strcpy(data->name, name);
-        data->max_size = max_size;
-        data->actual_size = 0;
+    if(shm->to_return == MAP_FAILED) {
+        check_error(ERROR, MAPPING_ERROR);
     }
-    return data;
+    
+    //create semaphore
+    char readable_name[255];
+    sprintf(readable_name, "%s_%d", SEM_NAME, pid);
+    shm->readable = sem_open(readable_name, O_CREAT, O_RDWR, 0); 
+    if(shm->readable == SEM_FAILED) {
+        check_error(ERROR, SEMAPHORE_OPENING_ERROR);
+    }
+    
+
+    char writable_name[255];
+    sprintf(writable_name, "%s_%d", MUTEX_NAME, pid);
+    shm->writable = sem_open(writable_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, 1);
+    if(shm->writable == SEM_FAILED) {
+        check_error(ERROR, SEMAPHORE_OPENING_ERROR);
+    }
+    
+    //save data in shared memory ADT
+    strcpy(shm->shm_name, shm_name); 
+    shm->fd = fd;
+    shm->max_size = max_size;
+    shm->actual_size = 0;
+    strcpy(shm->readable_name, readable_name);
+    strcpy(shm->writable_name, writable_name);
+
+    return shm;
 }
 
-void write_to_shared_memory(sharedMemADT data, const char* string) {
-    // Lock the semaphore
-    //sem_wait(&(data->semaphore));
+void write_to_shared_memory(sharedMemADT shm, const char * buff) {
+    sem_wait(shm->writable);
 
-    // Write data to shared memory
-    snprintf(data->to_return, data->actual_size, "%s", string);
+    size_t len = strlen(buff) + 1;  
+    if (len > shm->max_size) {
+        len = shm->max_size;
+    }
 
-    // Unlock the semaphore
-    sem_post(&(data->semaphore));
-}
+    memcpy(shm->to_return, buff, len);
+    shm->actual_size = len - 1;
 
-void close_shared_memory(sharedMemADT shm) {
-    // Close the shared memory object
-    check_error(shm_unlink(shm->name), REMOVING_NAME_SHM_ERROR);
-    check_error(close(shm->fd), PIPE_CLOSING_ERROR);
-    check_error(sem_destroy(&(shm->semaphore)), DESTROYING_SEMAPHORE_ERROR);
-    munmap(shm, shm->max_size);
+    sem_post(shm->writable);
+    sem_post(shm->readable);  
 }
 
 int read_from_shared_memory(sharedMemADT data, char * buff) {
-    // Lock the semaphore
-    printf("Antes del sem_wait\n");
-    sleep(4);
-    for(int i = 0; i < data->actual_size; i++){
-        printf("%c", data->to_return[i]);
-    }
+    sem_wait(data->readable);  
+    sem_wait(data->writable);  
+
+    memcpy(buff, data->to_return, data->actual_size + 1);  
+    int read_size = data->actual_size;
+
+    sem_post(data->writable);
+
+    return read_size;
+}
+
+void close_shared_memory(sharedMemADT shm) {
+    
    
-    
-    sem_wait(&(data->semaphore));
-    // Read data from shared memory
-    snprintf(buff, data->actual_size, "%s", data->to_return);
-    // data->actual_size = strlen(data->to_return);
-    // strcpy(buff, data->to_return);
+    sem_close(shm->writable);
+    sem_unlink(shm->writable_name);  
 
-    // Unlock the semaphore
-    sem_post(&(data->semaphore));
-    
-    return data->actual_size;
-}
+    sem_close(shm->readable);
+    sem_unlink(shm->readable_name);  
 
-void cleanup_shared_memory(sharedMemADT data) {
-    // Remove the mapping of the shared memory 
-    //check_error(munmap(data, data->actual_size), REMOVING_MAPPING_ERROR);
+    close(shm->fd);
+    shm_unlink(shm->shm_name);  
 
-    // Remove the name shared memory object
-    check_error(shm_unlink(data->name), REMOVING_NAME_SHM_ERROR);
+    munmap(shm->to_return, shm->max_size);   
 
-    check_error(close(data->fd), PIPE_CLOSING_ERROR);
-
-    // Destroy the semaphore
-    check_error(sem_destroy(&(data->semaphore)), DESTROYING_SEMAPHORE_ERROR);
-    free(data);
-}
-
-void printName(sharedMemADT data){
-    printf("%s", data->name);
+    free(shm); 
 }
 

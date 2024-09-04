@@ -22,7 +22,6 @@
 #define NEWLINE "\n"
 #define BUFFER_SIZE 2024
 
-#define CREATOR 1
 #define SLEEP_TIME 2
 
 #define MAX_PID 10000
