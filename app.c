@@ -78,6 +78,7 @@ void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files
 // FileName: .txt -> md5: hash -> PID: pid 
 // order of arrival
 int main(int argc, char *argv[]) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     if(argc<2){
         check_error(ERROR, NO_FILES);
     }
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
     int fd_out_slave[amount_of_slaves];
 
     // Create shared memory 
-    sharedMemADT shared_memory = init_shared_memory(getpid(), amount_of_files);
+    sharedMemADT shared_memory = init_shared_memory(getpid(), amount_of_files, PROT_WRITE);
     sleep(SLEEP_TIME);
 
     int current_slaves = 0;
@@ -113,14 +114,9 @@ int main(int argc, char *argv[]) {
 
     // Update pipe input and output streams to use shared memory
     // Save the file pointer of each slave
-    FILE *in_file_slave[amount_of_slaves];
-    FILE *out_file_slave[amount_of_slaves];
     for (int i = 0; i < amount_of_slaves; i++) {
-        in_file_slave[i] = fdopen(fd_in_slave[i], "w");
-        out_file_slave[i] = fdopen(fd_out_slave[i], "r");
-        if (in_file_slave[i] == NULL || out_file_slave[i] == NULL) {
-            check_error(ERROR, FDOPEN_ERROR);
-        }
+        setvbuf(fdopen(fd_out_slave[i], "r"), NULL, _IONBF, 0);
+        setvbuf(fdopen(fd_in_slave[i], "w"), NULL, _IONBF, 0);
     }
 
     fd_set readfds;
@@ -157,11 +153,8 @@ int main(int argc, char *argv[]) {
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
                     files_processed++;
-                    //printf("%s", buffer);
-                    write_to_shared_memory(shared_memory, buffer);
+                    write_to_shared_memory(shared_memory, buffer, bytes_read);
                     fprintf(results, "%s", buffer);
-
-                    //read_from_shared_memory(shared_memory); va en view creo no aca pero dejo comentado por si acaso
 
                     // Check if all the files were processed 
                     if (files_distributed < amount_of_files) {
@@ -172,16 +165,17 @@ int main(int argc, char *argv[]) {
             }
         }
     } 
+    stop_writing(shared_memory);
 
     // Close the file
     fclose(results);
 
-    //printf("Master PID: %d\n", getpid();
+    // Cleanup shared memory
+    waitClose(shared_memory);
+    close_shared_memory(shared_memory); 
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {
-        fclose(in_file_slave[i]);
-        fclose(out_file_slave[i]);
         close(fd_in_slave[i]);
         close(fd_out_slave[i]);
     }
@@ -190,10 +184,6 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < amount_of_slaves; i++) {
         check_error(waitpid(slave_pids[i], NULL, 0), WAITPID_ERROR);
     }
-
-    // Cleanup shared memory
-    close_shared_memory(shared_memory); 
-
 
     return 0;
 }
