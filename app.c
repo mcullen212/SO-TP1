@@ -99,7 +99,6 @@ int main(int argc, char *argv[]) {
     // Create shared memory 
     sharedMemADT shared_memory = init_shared_memory(getpid(), amount_of_files, PROT_WRITE);
     sleep(SLEEP_TIME);
-
     int current_slaves = 0;
     
     for(; current_slaves < amount_of_slaves; current_slaves++){
@@ -112,11 +111,15 @@ int main(int argc, char *argv[]) {
         check_error(ERROR, FILE_ERROR);
     }
 
+    FILE *slave_output[amount_of_slaves];
+    FILE *slave_input[amount_of_slaves];
     // Update pipe input and output streams to use shared memory
     // Save the file pointer of each slave
     for (int i = 0; i < amount_of_slaves; i++) {
-        setvbuf(fdopen(fd_out_slave[i], "r"), NULL, _IONBF, 0);
-        setvbuf(fdopen(fd_in_slave[i], "w"), NULL, _IONBF, 0);
+        slave_output[i] = fdopen(fd_out_slave[i], "r");
+        slave_input[i] = fdopen(fd_in_slave[i], "w");
+        setvbuf(slave_output[i], NULL, _IONBF, 0);
+        setvbuf(slave_input[i], NULL, _IONBF, 0);
     }
 
     fd_set readfds;
@@ -165,7 +168,9 @@ int main(int argc, char *argv[]) {
             }
         }
     } 
-    stop_writing(shared_memory);
+
+
+    //stop_writing(shared_memory);
 
     // Close the file
     fclose(results);
@@ -176,6 +181,8 @@ int main(int argc, char *argv[]) {
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {
+        fclose(slave_output[i]);
+        fclose(slave_input[i]);
         close(fd_in_slave[i]);
         close(fd_out_slave[i]);
     }

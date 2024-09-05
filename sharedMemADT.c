@@ -79,6 +79,11 @@ void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
     // printf("Semaphore readable name: %s\n", shm->readable_name);
     // printf("Semaphore close name: %s\n", shm->close_name);
     // printf("Shared memory name: %s\n", shm->shm_name);
+    int value;
+    sem_getvalue(shm->close_smh, &value);
+    if(value){
+        check_error(sem_post(shm->writable), SEMAPHORE_POST_ERROR);
+    }
 }
 
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
@@ -92,8 +97,7 @@ int read_from_shared_memory(sharedMemADT shm, char * buff) {
     // printf("Semaphore writable name: %s\n", shm->writable_name);
     // printf("Semaphore readable name: %s\n", shm->readable_name);
     // printf("Semaphore close name: %s\n", shm->close_name);
-    // printf("Shared memory name: %s\n", shm->shm_name);
-
+    // printf("Shared memory name: %s\n", shm->shm_name);    
     return read_size;
 }
 
@@ -106,7 +110,7 @@ void postClose(sharedMemADT shm) {
 }
 
 void stop_writing(sharedMemADT shm) {
-    shm->to_return[0] = '\0';
+    write(shm->fd, "\0", 1);
 }
 
 void close_shared_memory(sharedMemADT shm) {

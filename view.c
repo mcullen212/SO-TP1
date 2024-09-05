@@ -24,11 +24,15 @@ int main(int argc, char * argv[]){
     sharedMemADT shm = init_shared_memory(pid, amount_of_files, PROT_READ);
     int bytes_read = 1;
 
-    waitClose(shm);
+    //printf("antes del wait\n");
 
-    while(bytes_read != 0){
+    waitClose(shm);
+    int count = 0;
+
+    while(bytes_read != 0 && count < amount_of_files){
         bytes_read = read_from_shared_memory(shm, to_return);
         printf("%s\n", to_return);
+        count++;
     }
 
     postClose(shm);
