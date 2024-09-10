@@ -7,7 +7,7 @@ EXECUTABLES = app view slave
 OBJECTS = app.o view.o slave.o error.o
 
 # Default target
-all: $(EXECUTABLES)
+all: clean $(EXECUTABLES) 
 
 # Compiling object files
 app: app.c

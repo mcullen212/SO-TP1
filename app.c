@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "includes/app.h"
 
 void writeInPipe(int fd, char * buff) {
@@ -74,9 +76,6 @@ void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files
     }
 }
 
-//create a result .txt file with the name of the file and the md5 hash
-// FileName: .txt -> md5: hash -> PID: pid 
-// order of arrival
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     if(argc<2){
@@ -101,8 +100,9 @@ int main(int argc, char *argv[]) {
     sleep(SLEEP_TIME);
     int current_slaves = 0;
     
-    for(; current_slaves < amount_of_slaves; current_slaves++){
+    while(current_slaves < amount_of_slaves){
         slave_pids[current_slaves] = create_slave_process(fd_in_slave, fd_out_slave, current_slaves);
+        current_slaves++;
     }
 
     // Open the file to write the results
@@ -146,12 +146,11 @@ int main(int argc, char *argv[]) {
         // Wait for any of the file descriptors to be ready
         check_error(select(FD_SETSIZE, &temp_fds, NULL, NULL, NULL), SELECT_ERROR);
         
-
+        char buffer[256];
         // Go through all the slaves and check if they have finished processing the file
         for (int i = 0; i < amount_of_slaves; i++) {
             if (FD_ISSET(fd_out_slave[i], &temp_fds)) { // Check if the fd is still present, if not send a new file 
-                char buffer[256];
-                ssize_t bytes_read = read(fd_out_slave[i], buffer, sizeof(buffer) - 1);
+                ssize_t bytes_read = read(fd_out_slave[i], buffer, 256);
 
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
@@ -168,15 +167,13 @@ int main(int argc, char *argv[]) {
             }
         }
     } 
-
-
-    //stop_writing(shared_memory);
-
+    ready(shared_memory);
+    
     // Close the file
     fclose(results);
 
     // Cleanup shared memory
-    waitClose(shared_memory);
+    wait_close(shared_memory);
     close_shared_memory(shared_memory); 
 
     // Close file descriptors

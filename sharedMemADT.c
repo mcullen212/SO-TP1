@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "includes/sharedMemADT.h"
 
 typedef struct sharedMemCDT {
@@ -7,11 +9,9 @@ typedef struct sharedMemCDT {
     size_t max_size;
     char readable_name[MAX_NAME_LENGTH];
     sem_t *readable; 
-    char writable_name[MAX_NAME_LENGTH];
-    sem_t *writable;
     char close_name[MAX_NAME_LENGTH];
-    sem_t *close_smh;
-    
+    sem_t *close_sem;
+    int idx;
 } *sharedMemADT;
 
 sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode) {
@@ -19,7 +19,7 @@ sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode) {
 
     int max_size = MAX_SIZE(amount_of_files);
 
-    sprintf(shm->shm_name, "%s_%d", SHM_NAME, pid);
+    sprintf(shm->shm_name, "/%s_%d", SHM_NAME, pid);
 
     //create shared memory
     int fd = shm_open(shm->shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -33,26 +33,18 @@ sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode) {
     check_map_error(shm->to_return);
 
 
-    snprintf(shm->readable_name,MAX_NAME_LENGTH, "%s_%d", READABLE, pid);
+    snprintf(shm->readable_name, MAX_NAME_LENGTH, "%s-%d", READABLE, pid);
     shm->readable = sem_open(shm->readable_name, O_CREAT, S_IRUSR | S_IWUSR, 0); 
     check_error_sem(shm->readable);
 
-    snprintf(shm->writable_name, MAX_NAME_LENGTH, "%s_%d", WRITABLE, pid);
-    shm->writable = sem_open(shm->writable_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
-    check_error_sem(shm->writable);
-
-    snprintf(shm->close_name, MAX_NAME_LENGTH, "%s_%d", CLOSE_SEM, pid);
-    shm->close_smh = sem_open(shm->close_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
-    check_error_sem(shm->close_smh);
-
-    // printf("Semaphore writable name: %s\n", shm->writable_name);
-    // printf("Semaphore readable name: %s\n", shm->readable_name);
-    // printf("Semaphore close name: %s\n", shm->close_name);
-    // printf("Shared memory name: %s\n", shm->shm_name);
+    snprintf(shm->close_name, MAX_NAME_LENGTH, "%s-%d", CLOSE_SEM, pid);
+    shm->close_sem = sem_open(shm->close_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
+    check_error_sem(shm->close_sem);
     
     //save data in shared memory ADT 
     shm->fd = fd;
     shm->max_size = max_size;
+    shm->idx = 0;
     return shm;
 }
 
@@ -69,55 +61,39 @@ void check_map_error(void *ptr) {
 }
 
 void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
-    check_error(sem_wait(shm->writable), SEMAPHORE_WAIT_ERROR);
-
-    snprintf(shm->to_return, size, "%s",buff);
-
+    int bytes_written = sprintf( &(shm->to_return[shm->idx]), "%s", buff);
+    shm->idx += bytes_written;
     check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);  // Indicate data is ready to read
-    //check_error(sem_post(shm->writable), SEMAPHORE_POST_ERROR);  // Release writable semaphore
-    // printf("Semaphore writable name: %s\n", shm->writable_name);
-    // printf("Semaphore readable name: %s\n", shm->readable_name);
-    // printf("Semaphore close name: %s\n", shm->close_name);
-    // printf("Shared memory name: %s\n", shm->shm_name);
-    int value;
-    sem_getvalue(shm->close_smh, &value);
-    if(value){
-        check_error(sem_post(shm->writable), SEMAPHORE_POST_ERROR);
-    }
 }
 
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
-    //check_error(sem_wait(shm->writable), SEMAPHORE_WAIT_ERROR);
-
-    int read_size = sprintf(buff, "%s",shm->to_return);
-
-    check_error(sem_post(shm->writable), SEMAPHORE_POST_ERROR);
-
-    // printf("Semaphore writable name: %s\n", shm->writable_name);
-    // printf("Semaphore readable name: %s\n", shm->readable_name);
-    // printf("Semaphore close name: %s\n", shm->close_name);
-    // printf("Shared memory name: %s\n", shm->shm_name);    
-    return read_size;
+    int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
+    shm->idx += bytes_read;
+    int prueba = bytes_read;
+    while( (prueba-80) > 0){
+        prueba -= 79;
+        check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
+    }
+    return bytes_read;
 }
 
-void waitClose(sharedMemADT shm) {
-    check_error(sem_wait(shm->close_smh), SEMAPHORE_WAIT_ERROR);
+void wait_close(sharedMemADT shm) {
+    check_error(sem_wait(shm->close_sem), SEMAPHORE_WAIT_ERROR);
 }
 
-void postClose(sharedMemADT shm) {
-    check_error(sem_post(shm->close_smh), SEMAPHORE_POST_ERROR);
+void post_close(sharedMemADT shm) {
+    check_error(sem_post(shm->close_sem), SEMAPHORE_POST_ERROR);
 }
 
-void stop_writing(sharedMemADT shm) {
-    write(shm->fd, "\0", 1);
+void ready(sharedMemADT shm) {
+    check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);
 }
 
 void close_shared_memory(sharedMemADT shm) {
     check_error(munmap(shm->to_return, shm->max_size), REMOVING_MAPPING_ERROR);
-    check_error(sem_close(shm->writable), CLOSING_SEMAPHORE_ERROR);
     check_error(sem_close(shm->readable), CLOSING_SEMAPHORE_ERROR);
-    check_error(sem_close(shm->close_smh), CLOSING_SEMAPHORE_ERROR);
+    check_error(sem_close(shm->close_sem), CLOSING_SEMAPHORE_ERROR);
     
     // // PROBLEMA CON ELIMINAR POR NOMBRE 
     // check_error(sem_unlink(shm->writable_name), "Error unlinking writable semaphore");

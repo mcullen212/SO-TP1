@@ -2,7 +2,9 @@
 #define VIEW_H
 
 #include "error.h"
-#include "app.h"
 #include "sharedMemADT.h"
+
+#define BUFFER_SIZE 256
+#define MAX_PID 10000
 
 #endif

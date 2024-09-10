@@ -1,9 +1,10 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "includes/view.h"
 
 int main(int argc, char * argv[]){
     pid_t pid;
     int amount_of_files;
-    char to_return[256];
 
     if(argc == 3){
         amount_of_files = strtol(argv[2], NULL, 10);
@@ -23,19 +24,16 @@ int main(int argc, char * argv[]){
     
     sharedMemADT shm = init_shared_memory(pid, amount_of_files, PROT_READ);
     int bytes_read = 1;
+    char to_return[BUFFER_SIZE];
 
-    //printf("antes del wait\n");
+    wait_close(shm);
 
-    waitClose(shm);
-    int count = 0;
-
-    while(bytes_read != 0 && count < amount_of_files){
+    while(bytes_read != 0){
         bytes_read = read_from_shared_memory(shm, to_return);
-        printf("%s\n", to_return);
-        count++;
+        printf("%s", to_return);
     }
 
-    postClose(shm);
+    post_close(shm);
     close_shared_memory(shm);
 
     return 0; 

@@ -11,12 +11,12 @@
 #include "error.h"
 #include <string.h>
 
-#define SHM_NAME "/shm"
+#define SHM_NAME "shm"
 #define SHM_SIZE sizeof(struct sharedMemCDT)
-#define WRITABLE "/writable"
-#define READABLE "/readable"
-#define CLOSE_SEM "/close_smh"
-#define SIZE_STR 512
+#define WRITABLE "writable"
+#define READABLE "readable"
+#define CLOSE_SEM "close_smh"
+#define SIZE_STR 1024
 #define MAX_SIZE(files) (SIZE_STR*(files))
 #define MAX_NAME_LENGTH 255
 
@@ -31,8 +31,8 @@ void close_shared_memory(sharedMemADT shm);
 void create_sem(char * name, pid_t pid, int value, char * sem_name);
 void check_error_sem(sem_t *sem);
 void check_map_error(void *ptr);
-void waitClose(sharedMemADT shm);
-void postClose(sharedMemADT shm);
-void stop_writing(sharedMemADT shm);
+void wait_close(sharedMemADT shm);
+void post_close(sharedMemADT shm);
+void ready(sharedMemADT shm);
 
 #endif // SHAREDMEMADT_H
