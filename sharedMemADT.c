@@ -68,13 +68,12 @@ void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
 
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
+    if(shm->to_return[shm->idx] == '\t'){
+        printf("End of file\n");
+        return -1;
+    }
     int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
     shm->idx += bytes_read;
-    int prueba = bytes_read;
-    while( (prueba-80) > 0){
-        prueba -= 79;
-        check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
-    }
     return bytes_read;
 }
 
@@ -87,6 +86,8 @@ void post_close(sharedMemADT shm) {
 }
 
 void ready(sharedMemADT shm) {
+    // add a tab to indicate the end of the file
+    shm->to_return[shm->idx] = '\t';
     check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);
 }
 

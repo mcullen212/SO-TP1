@@ -28,8 +28,11 @@ int main(int argc, char * argv[]){
 
     wait_close(shm);
 
-    while(bytes_read != 0){
+    while(bytes_read != -1){
         bytes_read = read_from_shared_memory(shm, to_return);
+        if(bytes_read == -1){
+            break;
+        }
         printf("%s", to_return);
     }
 
