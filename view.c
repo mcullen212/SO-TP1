@@ -3,6 +3,8 @@
 #include "includes/view.h"
 
 int main(int argc, char * argv[]){
+    setvbuf(stdin, NULL, _IONBF, 0);
+
     pid_t pid;
     int amount_of_files;
 
@@ -30,14 +32,13 @@ int main(int argc, char * argv[]){
 
     while(bytes_read != -1){
         bytes_read = read_from_shared_memory(shm, to_return);
-        if(bytes_read == -1){
-            break;
+        if(bytes_read != -1){
+            printf("%s", to_return);
         }
-        printf("%s", to_return);
     }
 
     post_close(shm);
-    close_shared_memory(shm);
+    close_shared_memory(shm); 
 
     return 0; 
 }

@@ -167,14 +167,15 @@ int main(int argc, char *argv[]) {
             }
         }
     } 
-    ready(shared_memory);
+
+    end_of_data(shared_memory);
     
     // Close the file
     fclose(results);
 
     // Cleanup shared memory
     wait_close(shared_memory);
-    close_shared_memory(shared_memory); 
+    close_shared_memory(shared_memory);
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {

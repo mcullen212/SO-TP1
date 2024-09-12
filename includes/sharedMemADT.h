@@ -33,6 +33,7 @@ void check_error_sem(sem_t *sem);
 void check_map_error(void *ptr);
 void wait_close(sharedMemADT shm);
 void post_close(sharedMemADT shm);
-void ready(sharedMemADT shm);
+void end_of_data(sharedMemADT shm);
+void destroy_shared_memory(sharedMemADT shm);
 
-#endif // SHAREDMEMADT_H
+#endif

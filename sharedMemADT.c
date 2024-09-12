@@ -68,8 +68,7 @@ void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
 
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
-    if(shm->to_return[shm->idx] == '\t'){
-        printf("End of file\n");
+    if(shm->to_return[shm->idx+1] == '+'){
         return -1;
     }
     int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
@@ -85,24 +84,20 @@ void post_close(sharedMemADT shm) {
     check_error(sem_post(shm->close_sem), SEMAPHORE_POST_ERROR);
 }
 
-void ready(sharedMemADT shm) {
-    // add a tab to indicate the end of the file
-    shm->to_return[shm->idx] = '\t';
-    check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);
+void end_of_data(sharedMemADT shm) {
+    write_to_shared_memory(shm, "+", 1);
 }
 
 void close_shared_memory(sharedMemADT shm) {
     check_error(munmap(shm->to_return, shm->max_size), REMOVING_MAPPING_ERROR);
     check_error(sem_close(shm->readable), CLOSING_SEMAPHORE_ERROR);
     check_error(sem_close(shm->close_sem), CLOSING_SEMAPHORE_ERROR);
-    
-    // // PROBLEMA CON ELIMINAR POR NOMBRE 
-    // check_error(sem_unlink(shm->writable_name), "Error unlinking writable semaphore");
-    // check_error(sem_unlink(shm->readable_name), "Error unlinking readable semaphore");
-    // check_error(sem_unlink(shm->close_name), "Error unlinking close semaphore");
-
-    // check_error(shm_unlink(shm->shm_name), SHARED_MEMORY_UNLINKING_ERROR);
-
     free(shm);
+}
+
+void destroy_shared_memory(sharedMemADT shm) {
+    check_error(sem_unlink(shm->readable_name), SEMAPHORE_UNLINKING_ERROR);
+    check_error(sem_unlink(shm->close_name), SEMAPHORE_UNLINKING_ERROR);
+    check_error(shm_unlink(shm->shm_name), SHARED_MEMORY_UNLINKING_ERROR);
 }
 

@@ -3,6 +3,7 @@
 #include "includes/slave.h"
 
 int main(int argc, char *argv[]) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     char * file_name = NULL;
     size_t fn_size = 0;
 
@@ -45,9 +46,10 @@ void create_MD5(char *file_name) {
     // read the output from md5sum command
     if (fgets(buff, sizeof(buff), pipe) != NULL) {
         format_string(buff, hash_result, path_result);
-        char toRet[MAX_SIZE_BUFF * 3];
-        int dim = snprintf(toRet, sizeof(toRet), "NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()); // format the output
-        check_error((int) write(fileno(stdout), toRet, dim), WRITE_ERROR); // write in standard output
+        // char toRet[MAX_SIZE_BUFF * 3];
+        // int dim = snprintf(toRet, sizeof(toRet), "NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()); // format the output
+        // check_error((int) write(fileno(stdout), toRet, dim), WRITE_ERROR); // write in standard output
+        check_error((int) printf( "NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()), WRITE_ERROR);
     }
 
     check_error(pclose(pipe), PIPE_CLOSING_ERROR);
