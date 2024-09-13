@@ -11,20 +11,20 @@
 #include "error.h"
 #include <string.h>
 
-#define SHM_NAME "shm"
+#define SHM_NAME "shm_SharedMem"
 #define SHM_SIZE sizeof(struct sharedMemCDT)
 #define WRITABLE "writable"
 #define READABLE "readable"
-#define CLOSE_SEM "close_smh"
+#define CLOSE_SEM "close_shm"
 #define SIZE_STR 1024
-#define MAX_SIZE(files) (SIZE_STR*(files))
+#define MAX_SIZE (SIZE_STR*(40))
 #define MAX_NAME_LENGTH 255
 
 
 
 typedef struct sharedMemCDT * sharedMemADT;
 
-sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode);
+sharedMemADT init_shared_memory(char * name, int mode);
 void write_to_shared_memory(sharedMemADT shm, const char * buff, int size);
 int read_from_shared_memory(sharedMemADT data, char * buff);
 void close_shared_memory(sharedMemADT shm);
@@ -35,5 +35,6 @@ void wait_close(sharedMemADT shm);
 void post_close(sharedMemADT shm);
 void end_of_data(sharedMemADT shm);
 void destroy_shared_memory(sharedMemADT shm);
+void post_readable(sharedMemADT shm);
 
 #endif

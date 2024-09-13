@@ -14,16 +14,16 @@ typedef struct sharedMemCDT {
     int idx;
 } *sharedMemADT;
 
-sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode) {
+sharedMemADT init_shared_memory(char * name, int mode) {
     sharedMemADT shm = malloc(SHM_SIZE);
 
-    int max_size = MAX_SIZE(amount_of_files);
+    int max_size = MAX_SIZE;
 
-    sprintf(shm->shm_name, "/%s_%d", SHM_NAME, pid);
-
+    sprintf(shm->shm_name, "/%s", name);
+    
     //create shared memory
     int fd = shm_open(shm->shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-
+    
     check_error(fd, SHARED_MEMORY_OPEN_ERROR);
 
     check_error(ftruncate(fd, max_size), TRUNCATING_ERROR);
@@ -32,12 +32,11 @@ sharedMemADT init_shared_memory(pid_t pid, int amount_of_files, int mode) {
 
     check_map_error(shm->to_return);
 
-
-    snprintf(shm->readable_name, MAX_NAME_LENGTH, "%s-%d", READABLE, pid);
+    snprintf(shm->readable_name, MAX_NAME_LENGTH, "/%s_%s", READABLE, name);
     shm->readable = sem_open(shm->readable_name, O_CREAT, S_IRUSR | S_IWUSR, 0); 
     check_error_sem(shm->readable);
 
-    snprintf(shm->close_name, MAX_NAME_LENGTH, "%s-%d", CLOSE_SEM, pid);
+    snprintf(shm->close_name, MAX_NAME_LENGTH, "/%s_%s", CLOSE_SEM, name);
     shm->close_sem = sem_open(shm->close_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
     check_error_sem(shm->close_sem);
     
@@ -68,12 +67,18 @@ void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
 
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
-    if(shm->to_return[shm->idx+1] == '+'){
-        return -1;
+    if (shm->to_return[shm->idx+1] == '+') {
+        return -1;  
     }
+
     int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
     shm->idx += bytes_read;
     return bytes_read;
+}
+
+void post_readable(sharedMemADT shm) {
+    check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);
+   // write_to_shared_memory(shm, "\0", 1);
 }
 
 void wait_close(sharedMemADT shm) {
@@ -84,20 +89,20 @@ void post_close(sharedMemADT shm) {
     check_error(sem_post(shm->close_sem), SEMAPHORE_POST_ERROR);
 }
 
-void end_of_data(sharedMemADT shm) {
-    write_to_shared_memory(shm, "+", 1);
+void close_shared_memory(sharedMemADT shm) {
+    munmap(shm->to_return, shm->max_size);
+    close(shm->fd);
+    sem_close(shm->readable);
+    sem_close(shm->close_sem);
+    
 }
 
-void close_shared_memory(sharedMemADT shm) {
-    check_error(munmap(shm->to_return, shm->max_size), REMOVING_MAPPING_ERROR);
-    check_error(sem_close(shm->readable), CLOSING_SEMAPHORE_ERROR);
-    check_error(sem_close(shm->close_sem), CLOSING_SEMAPHORE_ERROR);
+
+void destroy_shared_memory(sharedMemADT shm) {
+    check_error(sem_unlink(shm->readable_name), SEMAPHORE_DESTROY_ERROR);
+    check_error(sem_unlink(shm->close_name), SEMAPHORE_DESTROY_ERROR);
+    check_error(shm_unlink(shm->shm_name), SHARED_MEMORY_UNLINKING_ERROR);
     free(shm);
 }
 
-void destroy_shared_memory(sharedMemADT shm) {
-    check_error(sem_unlink(shm->readable_name), SEMAPHORE_UNLINKING_ERROR);
-    check_error(sem_unlink(shm->close_name), SEMAPHORE_UNLINKING_ERROR);
-    check_error(shm_unlink(shm->shm_name), SHARED_MEMORY_UNLINKING_ERROR);
-}
 

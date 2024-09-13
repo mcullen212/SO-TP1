@@ -86,7 +86,12 @@ int main(int argc, char *argv[]) {
     int amount_of_slaves;
     int amount_of_files_per_slave;
 
-    printf("%d %d\n", getpid(), amount_of_files);
+    char shm_name[MAX_NAME_LENGTH];
+    sprintf(shm_name, "shm_%d", getpid());
+
+
+
+    printf("shm_%d\n", getpid());
     
 
     get_slaves(amount_of_files, &amount_of_slaves, &amount_of_files_per_slave);
@@ -96,7 +101,7 @@ int main(int argc, char *argv[]) {
     int fd_out_slave[amount_of_slaves];
 
     // Create shared memory 
-    sharedMemADT shared_memory = init_shared_memory(getpid(), amount_of_files, PROT_WRITE);
+    sharedMemADT shared_memory = init_shared_memory(shm_name, PROT_WRITE);
     sleep(SLEEP_TIME);
     int current_slaves = 0;
     
@@ -139,7 +144,7 @@ int main(int argc, char *argv[]) {
         }
         
     }
-
+    
     while (files_processed < amount_of_files) {
         fd_set temp_fds = readfds; // Copy the original grupo of descriptors
 
@@ -167,15 +172,13 @@ int main(int argc, char *argv[]) {
             }
         }
     } 
+    write_to_shared_memory(shared_memory, "+", 1);
 
-    end_of_data(shared_memory);
-    
-    // Close the file
     fclose(results);
-
-    // Cleanup shared memory
+    
     wait_close(shared_memory);
     close_shared_memory(shared_memory);
+    destroy_shared_memory(shared_memory);
 
     // Close file descriptors
     for(int i = 0; i < amount_of_slaves; i++) {
