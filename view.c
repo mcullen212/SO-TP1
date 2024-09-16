@@ -1,5 +1,3 @@
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "includes/view.h"
 
 int main(int argc, char * argv[]){
@@ -25,7 +23,7 @@ int main(int argc, char * argv[]){
     //wait_close(shm);
 
     int bytes_read = 1;
-    char to_return[1024*40] = {0};
+    char to_return[BUFFER_SIZE] = {0};
     
     while(bytes_read != -1){
         bytes_read = read_from_shared_memory(shm, to_return);
