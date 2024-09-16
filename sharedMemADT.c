@@ -1,5 +1,4 @@
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "includes/sharedMemADT.h"
 
 typedef struct sharedMemCDT {
@@ -60,19 +59,23 @@ void check_map_error(void *ptr) {
 }
 
 void write_to_shared_memory(sharedMemADT shm, const char * buff, int size) {
-    int bytes_written = sprintf( &(shm->to_return[shm->idx]), "%s", buff);
-    shm->idx += bytes_written;
+    int bytes_written = sprintf(&(shm->to_return[shm->idx]), "%s", buff);
+    if (bytes_written > 0) {
+        shm->idx += bytes_written;
+    }
     check_error(sem_post(shm->readable), SEMAPHORE_POST_ERROR);  // Indicate data is ready to read
 }
 
+
 int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
-    if (shm->to_return[shm->idx+1] == '+') {
-        return -1;  
-    }
-
     int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
     shm->idx += bytes_read;
+    if(shm->to_return[shm->idx-1] == '+'){
+        // printf("De nada Sangui por encontrar el error\n");
+        buff[bytes_read-1] = '\0';
+        return -1;
+    }
     return bytes_read;
 }
 

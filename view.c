@@ -22,22 +22,23 @@ int main(int argc, char * argv[]){
     
     sharedMemADT shm = init_shared_memory(shared_memory_name, PROT_READ);
 
-    wait_close(shm);
+    //wait_close(shm);
 
     int bytes_read = 1;
-    char to_return[BUFFER_SIZE];
+    char to_return[1024*40] = {0};
     
     while(bytes_read != -1){
         bytes_read = read_from_shared_memory(shm, to_return);
-        if(bytes_read == -1){
-            break;
+        // if(bytes_read == -1){
+        //     break;
         
-        }
-         printf("%s", to_return);     
+        // }
+        printf("%s", to_return);     
     }
     
-    post_close(shm);
+    //post_close(shm);
     close_shared_memory(shm); 
+    free(shm);
     
     return 0; 
 }

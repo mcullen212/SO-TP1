@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
     fclose(results);
     
-    wait_close(shared_memory);
+    //wait_close(shared_memory);
     close_shared_memory(shared_memory);
     destroy_shared_memory(shared_memory);
 
