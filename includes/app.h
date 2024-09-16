@@ -21,6 +21,7 @@
 
 #define NEWLINE "\n"
 #define BUFFER_SIZE 2024
+#define DIM_BUFFER 256
 
 #define SLEEP_TIME 4
 
