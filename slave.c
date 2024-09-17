@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     size_t fn_size = 0;
 
     if (argc < 2) {
-        while (getline(&file_name, &fn_size, stdin) > 0){
+        while (getline(&file_name, &fn_size, stdin) > 0) {
             if (file_name != NULL && strlen(file_name) > 0) {
                 // If the last character is a newline, we remove it
                 if (file_name[strlen(file_name) - 1] == '\n') {
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void format_string(char *md5_result, char *hash_result, char *path_result){
+void format_string(char *md5_result, char *hash_result, char *path_result) {
     char *token = strtok(md5_result, " ");
     check_error_token(token);
     strcpy(hash_result, token);
@@ -54,7 +54,7 @@ void create_MD5(char *file_name) {
     // Read the output from md5sum command
     if (fgets(buff, sizeof(buff), pipe) != NULL) {
         format_string(buff, hash_result, path_result);
-        check_error(printf( "NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()), WRITE_ERROR);
+        check_error(printf("NAME: %s - MD5: %s - PID: %d\n", path_result, hash_result, getpid()), WRITE_ERROR);
     }
 
     check_error(pclose(pipe), PIPE_CLOSING_ERROR);

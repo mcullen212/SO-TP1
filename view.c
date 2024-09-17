@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "includes/view.h"
 
-int main(int argc, char * argv[]){
+int main(int argc, char * argv[]) {
     setvbuf(stdin, NULL, _IONBF, 0);
 
     char *shared_memory_name = NULL; 

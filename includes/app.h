@@ -31,6 +31,7 @@
 void writeInPipe(int fd, char * buff);
 void redirect_pipe(int open_fd, int close_fd, FILE *stream);
 int create_slave_process(int *fd_in_slave, int *fd_out_slave, int current_slave);
+void get_slaves(int amount_of_files, int *amount_of_slaves, int *amount_of_files_per_slave);
 
 
 #endif

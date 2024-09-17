@@ -58,7 +58,7 @@ int read_from_shared_memory(sharedMemADT shm, char * buff) {
     check_error(sem_wait(shm->readable), SEMAPHORE_WAIT_ERROR);
     int bytes_read = sprintf(buff, "%s", &(shm->to_return[shm->idx]));
     shm->idx += bytes_read;
-    if(shm->to_return[shm->idx-1] == '+'){
+    if (shm->to_return[shm->idx-1] == '+'){
         buff[bytes_read-1] = '\0';
         return -1;
     }
