@@ -27,7 +27,7 @@ Y luego si quieren correr el view en otra terminal, donde shm_name es el nombre 
 ```
 
 ### Opcional: Creación de archivos testFiles para probar
-Contamos con una carpeta `testFiles` en la cual se puede optar por correr `createFiles.sh`, y cortar la ejecución cuando se determina que se creraron suficientes archivos de prueba:
+Contamos con una carpeta `testFiles` en la cual se puede optar por correr `createFiles.sh`, y cortar la ejecución cuando se determina que se creraron suficientes archivos de prueba. Pueden llegar a tener que darle acceso con `chmod u+x`:
 ```
 ./createFiles.sh
 ```
